@@ -1,28 +1,83 @@
-angular.module('songhop.services', [])
+angular.module('songhop.services', ['ionic.utils'])
 
-.factory("User", function() {
+.factory("User", function($http, $q, $localstorage, SERVER) {
 
 	var o = {
+		username: false,
+		session_id: false,
 		favorites: [],
 		newFavorites: 0
 	}
 
+	o.auth = function(username, signingUp) {
+		var authRoute;
+
+		if(signingUp) {
+			authRoute = 'signup'
+		} else {
+			authRoute = 'login'
+		}
+
+		return $http.post(SERVER.url + '/' + authRoute, {username: username})
+			.success(function(data) {
+				o.setSession(data.username, data.session_id, data.favorites);
+			});
+	}
+
+	o.setSession = function(username, session_id, favorites) {
+		if (username) o.username = username;
+		if (session_id) o.session_id = session_id;
+		if (favorites) o.favorites = favorites;
+
+		$localstorage.setObject( 'user', { username:username, session_id:session_id } );
+	}
+
 	o.addSongToFavorites = function(song) {
+		// make sure there's a song to add
 		if (!song) {return false};
 
+		// add the song to favorites array
 		o.favorites.unshift(song); 
+
+		// show badge on favorites icon 
 		o.newFavorites++;
+
+		// persist this to the server
+		return $http.post(SERVER.url + '/', {session_id:o.session_id, song_id:song.song_id });
 	}
 
 	o.removeSongFromFavorites = function(song, index) {
+		// make sure there's a song to remove
 		if (!song) {return false};
 
+		// remove the song from the favorites array
 		o.favorites.splice(index, 1);
+
+		return $http({
+			method: 'DELETE',
+			url: SERVER.url + '/favorites',
+			params: { session_id:o.session_id, song_id:song.song_id }
+		});
+	}
+
+	o.populateFavorites = function() {
+		return $http({
+
+			method: 'GET',
+			url: SERVER.url + '/favorites',
+			params: { session_id:o.session_id }
+		}).success(function(data) {
+			// merge data into the queue
+			o.favorites = data;
+		})
 	}
 
 	o.favoriteCount = function() {
+		// get new favorites count 
 		return o.newFavorites;
 	}
+
+	
 
 	return o;
 

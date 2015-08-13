@@ -59,8 +59,16 @@ angular.module('songhop', ['ionic', 'songhop.controllers'])
         }
       }
     })
+
+  // splash page
+  .state('splash', {
+    url: '/',
+    templateUrl: 'templates/splash.html',
+    controller: 'SplashCtrl'
+  })
+
   // If none of the above states are matched, use this as the fallback:
-  $urlRouterProvider.otherwise('/tab/discover');
+  $urlRouterProvider.otherwise('/');
 
 })
 
@@ -70,5 +78,5 @@ angular.module('songhop', ['ionic', 'songhop.controllers'])
   //url: 'http://localhost:3000'
 
   // Public Heroku server
-  url: 'https://ionic-songhop.herokuapp.com'
+  url: 'https://songhop.herokuapp.com'
 });
